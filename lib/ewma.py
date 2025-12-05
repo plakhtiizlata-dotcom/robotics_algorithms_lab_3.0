@@ -12,7 +12,6 @@ def ewma(data, alpha, offset=None, dtype=None, order='C', out=None):
         dtype = np.dtype(dtype)
 
     if data.ndim > 1:
-        # flatten input
         data = data.reshape(-1, order)
 
     if out is None:
@@ -22,29 +21,23 @@ def ewma(data, alpha, offset=None, dtype=None, order='C', out=None):
         assert out.dtype == dtype
 
     if data.size < 1:
-        # empty input, return empty array
         return out
 
     if offset is None:
         offset = data[0]
 
-    alpha = np.array(alpha, copy=False).astype(dtype, copy=False)
+    alpha = np.asarray(alpha).astype(dtype, copy=False)
 
-    # scaling_factors -> 0 as len(data) gets large
-    # this leads to divide-by-zeros below
     scaling_factors = np.power(1. - alpha, np.arange(data.size + 1, dtype=dtype),
                                dtype=dtype)
-    # create cumulative sum array
     np.multiply(data, (alpha * scaling_factors[-2]) / scaling_factors[:-1],
                 dtype=dtype, out=out)
     np.cumsum(out, dtype=dtype, out=out)
 
-    # cumsums / scaling
     out /= scaling_factors[-2::-1]
 
     if offset != 0:
-        offset = np.array(offset, copy=False).astype(dtype, copy=False)
-        # add offsets
+        offset = np.asarray(offset).astype(dtype, copy=False)
         out += offset * scaling_factors[1:]
 
     return out
